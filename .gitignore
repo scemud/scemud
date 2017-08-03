@@ -1,0 +1,18 @@
+# vagrant
+.vagrant
+vars.rb
+
+# app
+.idea
+.vscode
+.DS_STORE
+node_modules
+.module-cache
+*.log*
+build
+dist
+.env
+.awcache
+
+# yarn
+yarn_scripts/*.nohup
