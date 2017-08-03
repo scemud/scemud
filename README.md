@@ -26,19 +26,12 @@ vagrant up
 
 Wait for the VM to provision then restart.
 
-Log into the VM (via the GUI), open the terminal, and navigate to the workspace directory.  Execute the script you find there:
+Log into the VM (via the GUI), open the terminal and run your tests!
 ```
-cd ~/workspace
-./pull_repository.sh
-  <input your SSH key passphrase when asked>
-  <validate authenticity of SSH host when asked>
-```
-
-Once the repository is finished cloning, navigate into it and run the tests:
-```
-cd ~/workspace/scemud
 yarn test
 ```
+
+Win!
 
 -----
 
