@@ -1,121 +1,83 @@
-var webpack = require('webpack');
-var path = require('path');
+const webpack = require('webpack');
+const path = require('path');
 
-// variables
-var isProduction = process.argv.indexOf('-p') >= 0;
-var sourcePath = path.join(__dirname, './src');
-var outPath = path.join(__dirname, './dist');
+const paths = require('./webpack/config').paths;
+const outputFiles = require('./webpack/config').outputFiles;
+const rules = require('./webpack/config').rules;
+const plugins = require('./webpack/config').plugins;
+const resolve = require('./webpack/config').resolve;
+const IS_PRODUCTION = require('./webpack/config').IS_PRODUCTION;
+const IS_DEVELOPMENT = require('./webpack/config').IS_DEVELOPMENT;
 
-// plugins
-var HtmlWebpackPlugin = require('html-webpack-plugin');
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
+const devServer = require('./webpack/dev-server').devServer;
 
+const DashboardPlugin = require('webpack-dashboard/plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+
+// Default client app entry file
+const entry = [
+  path.join(paths.javascript, 'client.js'),
+];
+
+plugins.push(
+  // Creates vendor chunk from modules coming from node_modules folder
+  new webpack.optimize.CommonsChunkPlugin({
+    name: 'vendor',
+    filename: outputFiles.vendor,
+    minChunks(module) {
+      const context = module.context;
+      return context && context.indexOf('node_modules') >= 0;
+    },
+  }),
+  // Builds index.html from template
+  new HtmlWebpackPlugin({
+    template: path.join(paths.source, 'index.html'),
+    path: paths.build,
+    filename: 'index.html',
+    minify: {
+      collapseWhitespace: true,
+      minifyCSS: true,
+      minifyJS: true,
+      removeComments: true,
+      useShortDoctype: true,
+    },
+  })
+);
+
+if (IS_DEVELOPMENT) {
+  // Development plugins
+  plugins.push(
+    // Enables HMR
+    new webpack.HotModuleReplacementPlugin(),
+    // Don't emmit build when there was an error while compiling
+    // No assets are emitted that include errors
+    new webpack.NoEmitOnErrorsPlugin(),
+    // Webpack dashboard plugin
+    new DashboardPlugin()
+  );
+
+  // In development we add 'react-hot-loader' for .js/.jsx files
+  // Check rules in config.js
+  rules[0].use.unshift('react-hot-loader/webpack');
+  entry.unshift('react-hot-loader/patch');
+}
+
+// Webpack config
 module.exports = {
-  context: sourcePath,
-  entry: {
-    main: './index.ts',
-    vendor: [
-      'react',
-      'react-dom',
-      'react-router',
-      'mobx',
-      'mobx-react',
-      'mobx-react-router'
-    ]
-  },
+  devtool: IS_PRODUCTION ? false : 'cheap-eval-source-map',
+  context: paths.javascript,
+  watch: !IS_PRODUCTION,
+  entry,
   output: {
-    path: outPath,
-    filename: 'bundle.js',
-    publicPath: '/'
-  },
-  target: 'web',
-  resolve: {
-    extensions: ['.js', '.ts', '.tsx'],
-    // Fix webpack's default behavior to not load packages with jsnext:main module
-    // (jsnext:main directs not usually distributable es6 format, but es6 sources)
-    mainFields: ['module', 'browser', 'main']
+    path: paths.build,
+    publicPath: '/',
+    filename: outputFiles.client,
   },
   module: {
-    loaders: [
-      // .ts, .tsx
-      {
-        test: /\.tsx?$/,
-        use: isProduction
-          ? 'awesome-typescript-loader?module=es6'
-          : [
-            'react-hot-loader',
-            'awesome-typescript-loader'
-          ]
-      },
-      // css 
-      {
-        test: /\.css$/,
-        use: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [
-            {
-              loader: 'css-loader',
-              query: {
-                modules: true,
-                sourceMap: !isProduction,
-                importLoaders: 1,
-                localIdentName: '[local]__[hash:base64:5]'
-              }
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                ident: 'postcss',
-                plugins: [
-                  require('postcss-import')({ addDependencyTo: webpack }),
-                  require('postcss-url')(),
-                  require('postcss-cssnext')(),
-                  require('postcss-reporter')(),
-                  require('postcss-browser-reporter')({ disabled: isProduction }),
-                ]
-              }
-            }
-          ]
-        })
-      },
-      // static assets 
-      { test: /\.html$/, use: 'html-loader' },
-      { test: /\.png$/, use: 'url-loader?limit=10000' },
-      { test: /\.jpg$/, use: 'file-loader' },
-    ],
+    rules,
   },
-  plugins: [
-    new webpack.LoaderOptionsPlugin({
-      options: {
-        context: sourcePath
-      }
-    }),
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'vendor',
-      filename: 'vendor.bundle.js',
-      minChunks: Infinity
-    }),
-    new webpack.optimize.AggressiveMergingPlugin(),
-    new ExtractTextPlugin({
-      filename: 'styles.css',
-      disable: !isProduction
-    }),
-    new HtmlWebpackPlugin({
-      template: 'assets/index.html'
-    })
-  ],
-  devServer: {
-    host: '0.0.0.0',
-    contentBase: sourcePath,
-    hot: true,
-    stats: {
-      warnings: false
-    },
-  },
-  node: {
-    // workaround for webpack-dev-server issue 
-    // https://github.com/webpack/webpack-dev-server/issues/60#issuecomment-103411179
-    fs: 'empty',
-    net: 'empty'
-  }
+  resolve,
+  plugins,
+  devServer,
 };
