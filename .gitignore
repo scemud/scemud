@@ -2,6 +2,7 @@
 node_modules/
 .vscode/
 .vagrant/
+vars.rb
 build/
 .module-cache
 *.log*
