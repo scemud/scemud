@@ -2,7 +2,7 @@
 node_modules/
 .vscode/
 .vagrant/
-build
+build/
 .module-cache
 *.log*
 _nogit
