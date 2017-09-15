@@ -81,7 +81,7 @@ EOM
     mkdir -p $VSC_EXT_DIR
     code --user-data-dir=${VSC_CONF_DIR} \
         --extensions-dir=${VSC_EXT_DIR} \
-        --install-extension=eg2.tslint
+        --install-extension=dbaeumer.vscode-eslint
     chown -R vagrant:vagrant ${VHOME}/.vscode
 
 fi
