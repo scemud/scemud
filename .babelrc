@@ -1,22 +1,4 @@
 {
-  "plugins": [
-    "transform-decorators-legacy",
-    "transform-class-properties",
-    "syntax-decorators"
-  ],
-  "presets": [
-    ["es2015", { "modules": false }],
-    "stage-0",
-    "react"
-  ],
-  "env": {
-    "development": {
-      "plugins": [
-        "react-hot-loader/babel"
-      ]
-    },
-    "production": {
-      "presets": ["react-optimize"]
-    }
-  }
+  "presets": ["es2015","es2017"],
+  "plugins": ["transform-es2015-destructuring", "transform-object-rest-spread", "syntax-async-functions"]
 }

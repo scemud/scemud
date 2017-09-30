@@ -1,4 +1,12 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
 require './vars.rb'
+$VARS[:VHOME] = "/home/vagrant"
+$VARS[:DEV_VM_IP] = "192.168.56.78"
+$VARS[:DEV_VM_HOSTNAME] = "dev.vm"
+$VARS[:IDE_VM_IP] = "192.168.56.79"
+$VARS[:IDE_VM_HOSTNAME] = "ide.vm"
 
 %w[
   vagrant-vbguest
@@ -6,7 +14,7 @@ require './vars.rb'
 ].each do |plugin|
   if (ARGV[0] == 'up') && (Vagrant.has_plugin?(plugin) == false)
     puts " "
-    puts "  Missing plugin!"
+    puts "  Warning! Missing plugin!"
     puts "  -----------------------------------------"
     puts "  vagrant plugin install #{plugin}"
     puts "  -----------------------------------------"
@@ -16,38 +24,52 @@ require './vars.rb'
 end
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "jhcook/fedora26"
+  # check/output version of vbox guest extensions on VM
+  config.vbguest.no_install = true
+  config.vm.synced_folder ".", "#{$VARS[:VHOME]}/workspace", disabled: false
 
-  config.vm.provider "virtualbox" do |v|
-    v.memory = $FULL_ENV ? 6144 : 2048
-    v.cpus = $FULL_ENV ? 4 : 1
-    if $FULL_ENV then 
+  # local development server
+  config.vm.define "dev", primary: true do |dev|
+    dev.vm.box = "jhcook/fedora26"
+    dev.vm.hostname = "dev.vm"
+    dev.vm.network "private_network", ip: $VARS[:DEV_VM_IP]
+
+    dev.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+      v.cpus = 2
+      v.gui = false
+    end
+
+    dev.vm.provision "file", source: ".provisioning/ide_id_rsa.pub",
+      destination: "#{$VARS[:VHOME]}/.ssh/ide_id_rsa.pub.tmp"
+    dev.vm.provision "shell", path: ".provisioning/common.sh", env: $VARS
+    dev.vm.provision "shell", path: ".provisioning/dev.sh", env: $VARS
+
+    #dev.vm.provision :reload
+  end
+
+  # development IDE machine
+  config.vm.define "ide", autostart: false do |ide|
+    ide.vm.box = "jhcook/fedora26"
+    ide.vm.hostname = "ide.vm"
+    ide.vm.network "private_network", ip: $VARS[:IDE_VM_IP]
+
+    ide.vm.provider "virtualbox" do |v|
+      v.memory = 4096
+      v.cpus = 4
       v.gui = true
       v.customize ["modifyvm", :id, "--vram", "128"]
       v.customize ["modifyvm", :id, "--clipboard", "bidirectional"]
     end
+
+    ide.vm.provision "file", source: $VARS[:GIT_PRIVKEY_PATH],
+      destination: "#{$VARS[:VHOME]}/.ssh/id_rsa"
+    ide.vm.provision "file", source: ".provisioning/ide_id_rsa",
+      destination: "#{$VARS[:VHOME]}/.ssh/ide_id_rsa"
+    ide.vm.provision "shell", path: ".provisioning/common.sh", env: $VARS
+    ide.vm.provision "shell", path: ".provisioning/ide.sh", env: $VARS
+
+    # ide.vm.provision :reload
   end
 
-  $WORKSPACE = "/home/vagrant/workspace"
-  if $FULL_ENV then 
-    config.vm.provision "file", source: ".", destination: $WORKSPACE
-
-    if Vagrant::Util::Platform.windows? then
-      config.vm.provision "shell", path: ".scripts/reset_executable_bits.sh", env: {
-        WORKSPACE: $WORKSPACE
-      }
-    end
-  else
-    config.vm.network "forwarded_port", guest: 3000, host: 3000, auto_correct: true
-    config.vm.synced_folder ".", $WORKSPACE
-  end
-
-  config.vm.provision "file", source: ".scripts/.bashrc", destination: "/home/vagrant/.bashrc"
-  config.vm.provision "file", source: $GIT_PRIVKEY_PATH, destination: "/home/vagrant/.ssh/id_rsa"
-  config.vm.provision "shell", path: ".scripts/provision.sh", env: {
-    FULL_ENV: $FULL_ENV,
-    GIT_NAME: $GIT_NAME,
-    GIT_EMAIL: $GIT_EMAIL
-  }
-  config.vm.provision :reload
 end
