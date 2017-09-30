@@ -1,3 +1,33 @@
+## Prerequisites
+1. VirtualBox (w/ Extension Pack)
+1. Vagrant
+1. Git
+1. Authorized SSH key
+
+## Getting Started
+Clone this repository:
+```
+git clone git@github.com:scemud/scemud.git
+cd scemud
+```
+
+Copy the `vars.example.rb` into a file named just `vars.rb` and substitute your configuration for the example values within it:
+```
+cp vars.example.rb vars.rb
+vi vars.rb
+  ...<substitute variable values and save>...
+```
+
+Start the VM:
+```
+vagrant up dev ide
+```
+> *if you don't have the right vagrant plugins you will be told how to install them--do so, then retry this command*
+
+Wait for the VM to provision, then you're good to go!
+
+-----
+
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/linnovate/mean?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 # [![MEAN Logo](http://mean.io/wp-content/themes/twentysixteen-child/images/meanlogo.png)](http://mean.io/) MEAN<sup>2</sup>
