@@ -24,7 +24,17 @@ vagrant up dev ide
 ```
 > *if you don't have the right vagrant plugins you will be told how to install them--do so, then retry this command*
 
-Wait for the VM to provision, then you're good to go!
+Wait for the VM to provision
+
+From the ide, open a terminal window
+ssh dev
+
+Inside dev is where you will install and start the MEAN stack:
+cd workspace
+yarn install
+yarn pull:mongo
+yarn start:mongo
+yarn start
 
 -----
 
