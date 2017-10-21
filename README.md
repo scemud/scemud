@@ -26,15 +26,19 @@ vagrant up dev ide
 
 Wait for the VM to provision
 
-From the ide, open a terminal window
+From the ide, open a terminal window:
+```
 ssh dev
+```
 
 Inside dev is where you will install and start the MEAN stack:
+```
 cd workspace
 yarn install
 yarn pull:mongo
 yarn start:mongo
 yarn start
+```
 
 -----
 
